@@ -11,15 +11,19 @@ import com.mypractice.controller.Library;
 import com.mypractice.repository.LibraryRepository;
 
 @SpringBootApplication
-public class Application implements CommandLineRunner {
 
-	@Autowired
-	LibraryRepository repository;
+public class Application{
+	
+	//public class Application implements CommandLineRunner {
+	/*
+	 * @Autowired 
+	 * LibraryRepository repository;
+	 */
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
 	}
 
-	@Override
+	/*@Override
 	public void run(String args[]) {
 		
 		Library lib=repository.findById("generate2022").get(); 
@@ -59,6 +63,6 @@ public class Application implements CommandLineRunner {
 		 repository.delete(en);
 		
 		
-	}
+	}*/
 
 }
