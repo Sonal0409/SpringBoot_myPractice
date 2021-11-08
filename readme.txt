@@ -17,6 +17,8 @@ We should get a response with a message and ID
 Here id is combination of isbn and aisle
 
 This data is to be added to a DB. So lets create a DB and table
+
+************************************************************
 Step 1 :
 Download the mysql installer
 Go to this link :
@@ -27,6 +29,7 @@ Keep pressing next and install.
 Set username : root
 Password : root
 
+
 Step2:
 Go to search bar in your machine and enter mysql
 Select mysql workbench option
@@ -34,7 +37,9 @@ You can also go to program files  mysql-mysqlWorkbechfolderMySQLWorkben
 Its an editior to perform any mysql operations
 
 Open the editor.
+
 Step3:
+
 Create DataBase & table to add data for the service
 
 Go to mysql  click on new sql tab
@@ -91,7 +96,7 @@ Just like we created a bean for greeting with getter and setter methods, using 2
 Similarly we are going to create a bean for the table also for all 5 columns
 Bookname, id, isbn, aisle, author
 
-Go to Controller package and create a class Library
+Go to Controller package and create a class Library.java
 Create following variables:
 
 	private String book_name;
@@ -209,14 +214,11 @@ Application.java  main package  com.Lesson4EndProject.com.Lesson4EndProjec
 
 Only for this session I am overriding the run method. In some time we will do the crud operations from Postman only
 
-
-
-
 Call the interface CommandLineRunner first :
 @SpringBootApplication
 public class Application implements CommandLineRunner {
-
-Now add this method:
+}
+Now add this method in the class:
 @Override
 	public void run(String args[]) {
 }
@@ -259,10 +261,6 @@ Library en =new Library();
 }
  Stop server and start server again
 	Go to table and check if the data is available or not
-
-
-
-
 If you want to extract all of the data from the tables and extract the bookname
 	Before this lets comment out code for add the book.
 	Comment out this line repository.save(en);
@@ -488,6 +486,203 @@ Now create setter and getters for these
 Select all the string and right click  sourcegetters and setters   select variables after id  finish
 
 Save the file and close
+
+Go to your Add book controller class
+@RestController
+public class AddBookResponseMSGControler {
+	@Autowired
+	LibraryRepository repository;
+	@PostMapping("/addBook")
+	public ResponseEntity<AddResponse> addBookImplementation(@RequestBody Library library)
+	{
+	
+		
+		library.setId(library.getIsbn()+library.getAisle());
+		repository.save(library);
+// Create an Object for Addresponse bean to get the methods
+		
+		AddResponse ad = new AddResponse();
+		ad.setMsg("Book added successfully");
+		ad.setId(library.getIsbn()+library.getAisle());
+
+		// Now you have to create the repsonse mesaage and id objects using java and java bean
+		// but you have to send it to the user as JSON object
+		// for this use ResponseEntity object
+		// it will automatically convert the java mapping(Bean methods) to JSON and show to user
+		// ad here is response message and book id
+		// https status is repsonse code which is 201
+		
+		return new ResponseEntity<AddResponse>(ad,HttpStatus.CREATED);
+		
+		// ResponseEntity is a class in springboot that holds all your response 
+		//and will display the desired response to user.
+		// start server and execute the code.
+		
+		// output should look like 
+		// "msg": "Book added successfully",
+	    //  "id": "nov20"
+}
+}
+
+Stop the server and start it again
+
+Go to postman
+In the request give new set of data now in the json body
+And send the request
+Request should be sent and response message should come
+
+this is a Scenario to check if the book already exisits or not.
+if it exists then give an error response.
+	
+In real time we always want to put the business logic like how to create id
+To check if book exists or not in a seperate package and seperate class, seperate methods
+
+and in the contorller class we call those methods.
+	
+	for this first create a new package service com.mypractice.service
+
+	// in the package create a class LibraryService
+
+package com.mypractice.service;
+
+public class LibraryService {
+
+}
+
+Now create logic method to generate id for DB entry of book
+Now add logic method to check if book is there or not.
+	
+so here lets create  2 methods 
+
+  --> buildId(needs 2 parameters : isbn and aisle number)
+
+//Step 2
+@Service
+public class LibraryService {
+	
+//step 1
+	@Autowired
+	LibraryRepository repository;
+	
+	public String buildId(String isbn, int aisle)
+	{
+		return isbn+aisle;
+		
+	}
+
+Now go back to controller class and change the logic for buildid. Call the above method in the Libraryservice or ADDbook controller class
+
+
+
+
+
+
+	@Autowired
+	LibraryRepository repository;
+	
+	@Autowired
+	LibraryService libraryService;
+
+@PostMapping("/addBookAlreadyexists")
+	public ResponseEntity<AddResponse> addBookImplementation(@RequestBody Library library)
+	
+{
+	
+		String id = libraryService.buildId(library.getIsbn(),library.getAisle());
+		
+		AddResponse ad = new AddResponse();
+
+
+Now go to LibraryService.java class again
+
+Build next method, its return type is going to be boolean
+
+public boolean checkBookAlreadyexist(String id)
+	{
+		// Step1 : this method will take the id given by controller class and check 
+		//if id exisits in db or not.
+// lib is an object we are creating. Optional is a collection here
+		
+		Optional<Library> lib=repository.findById(id);
+		
+		if(lib.isPresent())
+		
+			return true;
+		else
+			return false;
+		
+		
+		
+		
+	}
+*****************************************
+Go back to controller class now
+
+Add following code for if condition
+
+if(!libraryService.checkBookAlreadyexist(id)) // this methods return true or false
+	    	 // if book doesnot exist..hence negation. then create the book as mentioned below.
+	     {	
+	    library.setId(id);
+		repository.save(library);
+		
+		// Create an Object for Addresponse bean to get the methods
+		
+		
+		ad.setMsg("Book added successfully");
+		ad.setId(id);
+        return new ResponseEntity<AddResponse>(ad,HttpStatus.CREATED);
+		
+	}
+	     else
+	     {
+	    	 ad.setMsg("Book already Exists");
+	    	 ad.setId(id);
+	     
+	    	 return new ResponseEntity<AddResponse>(ad,HttpStatus.ACCEPTED); 
+
+	    	 // httpstatus accepted is 202, response is like request accepted 
+
+	     }
+
+
+This is a negative scenarios
+
+Lets test is now
+
+Start the server again
+
+
+
+Go to poastman
+
+Same request POSt
+
+Change data  positive scenario
+It will add book
+Given positive response
+
+__> now send the same request again..should give message it exisits
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+After the service class is ready.. you call those methods in controller class..
+
+
 
 
 
